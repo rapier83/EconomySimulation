@@ -38,7 +38,6 @@ class System:
     """
     1) Player의 수입 PLayers.Income 에서 차감하는 비율 System.Taxation을 정한다.
     2) System.Taxtion에 따라 가처분소득 Player.DisposableIncome 을 계산한다.
-
     """
 
     def __init__(self, Population, Taxation):
@@ -78,5 +77,5 @@ class isRate(Exception):
         return self.val
 
 
-Sys1 = System(0.1, 1) # Raise Error
-Sys2 = System(10, 0.1) # No Error
+Sys1 = System(0.1, 1)   # Raise Error
+Sys2 = System(10, 0.1)  # No Errors
