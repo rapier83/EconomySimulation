@@ -1,4 +1,5 @@
-# import numpy as np
+import numpy as np
+import Exceptions as ec
 
 # 시스템의 변수들을 정의한다
 # 플레이어들의 변수를 정의한다
@@ -6,9 +7,9 @@
 # 각 반복마다 변수들이 어떤 영향을 주고 받는지 정의한다
 
 
-class Players:
+class Player:
     """
-    `attributeOfPlayers` 변수가 1차원 이상인 경우 다음의 변수들을 선택하여 할당한다.
+    `attributeOfPlayer` 변수가 1차원 이상인 경우 다음의 변수들을 선택하여 할당한다.
     1) id: Player 구분값
     2) 잔고: 남아있는 재산값(Account), 종속변수, Save = Income - Tax - consumption
     3) 수입: 매회 벌어들이는 재산값, 독립변수 통제가능, 생산성으로 통제한다.
@@ -16,66 +17,70 @@ class Players:
     5) 사업소득: Player 중 일부는 사업소득을 받는다.
     """
 
-    def __init__(self, _ID, \
-                 isLabor=True, \
-                 Productivity = 0.5, \
-                 EarnedIncome = 0.5, \
-                 Bizincome = 0.5, \
-                 Consume = 0.5, \
+    def __init__(self, _id,
+                 isLabor=True,
+                 Productivity = 0.5,
+                 EarnedIncome = 0.5,
+                 Bizincome = 0.5,
+                 Consume = 0.5,
                  TaxRate = 0.1):
 
-        self._ID = _ID
+        self._id = _id
         self.Productivity = Productivity
         self.isLabor = isLabor
-        if self.isLabor == False or self.isLabor == 0:
+        if self.isLabor:
             self.BizIncome = Bizincome
+        else:
+            self.BizIncome = 0
         self.EarnedIncome = EarnedIncome
-        self.TotalIncome = self.EarnedIncome + self.BizIncome
-        self.Account = self.TotalIncome * (1 - TaxRate) - Consume
+        self.TotalIncome = 0
+        self.Account = 0                 # Account = TotalIncome * (1 - TaxRate) - Consume
 
 
 class System:
     """
-    1) Player의 수입 PLayers.Income 에서 차감하는 비율 System.Taxation을 정한다.
+    1) Player의 수입 Player.Income 에서 차감하는 비율 System.Taxation을 정한다.
     2) System.Taxtion에 따라 가처분소득 Player.DisposableIncome 을 계산한다.
     """
 
     def __init__(self, Population, Taxation):
         try:
-            if type(self.Population) != int:
-                raise isInteger()
+            if type(Population) != int:
+                raise ec.isInteger()
             self.Population = Population
-        except Exception as Err:
+        except ec.isInteger as Err:
             print(Err)
 
         try:
             if Taxation <= 0 or Taxation >= 1:
-                raise isRate()
+                raise ec.isRate()
             self.Taxation = Taxation
-        except Exception as Err:
+        except ec.isRate as Err:
             print(Err)
 
     def setup(self, pop=100, taxation=0.1):
         pass
 
 
-class isInteger(Exception):
-
-    def __init__(self):
-        self.val = "[Setting Error]: This Value Must Be An Integer."
-
-    def __str__(self):
-        return self.val
+def SystemInitiation():
+    pass
 
 
-class isRate(Exception):
+def PlayerInitiation(number):
+    k = list()
+    for i in range(number):
+        temp = Player(str(i),
+                      isLabor=True,
+                      EarnedIncome=np.random.random(),
+                      Productivity=np.random.random(),
+                      Consume=0.01)
+        k.append(temp.__dict__)
+    return k
 
-    def __init__(self):
-        self.val = "[Setting Error]: This Value Must Be An Integer."
-
-    def __str__(self):
-        return self.val
 
 
 Sys1 = System(0.1, 1)   # Raise Error
 Sys2 = System(10, 0.1)  # No Errors
+
+K = PlayerInitiation(100)
+
