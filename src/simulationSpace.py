@@ -1,5 +1,6 @@
 import numpy as np
 import Exceptions as ec
+import pandas as pd
 
 __doc__ = """
         # 시스템의 변수들을 정의한다
@@ -21,13 +22,17 @@ class Player:
     """
 
     def __init__(self, _id, PlayerData, **kwargs):
-
-        self.attr = PlayerData
-        self.attr.update(kwargs)
+        self.id = _id
+        self.PersonalData = {
+            'Productivity': PlayerData['Productivity'],
+            'EarnIncome': PlayerData['EarnedIncome'],
+        }
+        self.AddtionalArgs = dict().update(kwargs)
         # TODO: kwargs 판단 후 TotalIncome 에 포함함 추후 작성
 
-        self.attr.update({'TotalIncome': self.attr['BizIncome'] + self.attr['EarnedIncome']})
-        self.attr.update(dict(Account=self.attr['TotalIncome'] * (1 - self.attr['TaxRate'] - self.attr['Consume'])))
+        self.Account = {'TotalIncome': self.attr['BizIncome'] + self.attr['EarnedIncome'],
+                        'DisposableIncome': self.Account['TotalIncome'] * (1 - PlayerData['TaxRate'] - PlayerData['ConsumeIndex'])}
+
 
 
 class System:
@@ -37,17 +42,12 @@ class System:
     2.System.Taxation 에 따라 가처분소득 Player.DisposableIncome 을 계산한다.
     """
 
-    def __init__(self, Population: int=100, Taxation: int=0.1, LaborRate: float=0.3, Productivity: bool=False, Consume: bool=False, **kwargs: dict()):
+    def __init__(self, Population: int=100, Taxation: int=0.1, LaborRatio: float=0.3, Productivity: bool=False, Consume: bool=False, **kwargs: dict()):
 
         """
         By kwarg, Include additional attributes of Player
         :type kwargs: dict()
         """
-        self.Players = list()
-        self.attr = kwargs
-        self.Productivity = Productivity
-        self.Consume = Consume
-        
         try:
             if type(Population) != int:
                 raise ec.isInteger()
@@ -70,34 +70,34 @@ class System:
         except ec.isBool as Err:
             print(f'{Err} : Additional argument.')
 
-        if LaborRate is not None:
-            self.BizCandidate = list(np.random.randint(self.Population, size=int(self.Population * LaborRate)))
+        self.SystemValues = {
+            'Population': Population,
+            'TaxRate': Taxation,
+            'ProductivityControl': Productivity,
+            'ConsumeIndexControl': Consume,
+            'LaborRatio': LaborRatio
+        }
+        # self.Players = pd.DataFrame
+
+        self.AdditionalValues = kwargs
+        # TODO: 판단 후 계산 시행
 
     def DeployPlayers(self, **kwargs):
-
-        for i in range(self.Population):
-            each = {}
-
-            if self.Productivity:
-                each.update(dict(Productivity=np.random.random()))
-            if self.Consume:
-                each.update(dict(Consume=np.random.random()))
-            if i in self.BizCandidate:
-                each.update(dict(isLabor=False))
-                each.update(dict(BizIncome=np.random.random()))
-            else:
-                each.update({'isLabor': False})
-                each.update(dict(EarnedIncome=np.random.random()))
-
-            self.attr = {
-                'isLabor': np.random.random(),
-                'EarnedIncome': np.random.random(),
-                'Productivity': np.random.random(),
-                'ConsumeRate': np.random.random()
-            }
-
-            PlayerData = Player(str(i), each, **kwargs)
-            self.Players.append(PlayerData.__dict__)
+        self.Players = pd.DataFrame
+        pop = self.SystemValues['Population']
+        labor = int(pop * (1 - self.SystemValues['LaborRatio']))
+        labors = np.random.choice(pop, labor, replace=False)
+        columns = ['_id', 'isLabor', 'Productivity', 'ConsumeIndex', 'BizIncome', 'EarnedIncome']
+        self.Players = pd.DataFrame(columns=columns)
+        self.Players['_id'] = np.arange(0, pop)
+        self.Players['isLabor'] = False
+        self.Players.loc[labors, 'isLabor'] = True
+        self.Players['Productivity'] = np.random.random(pop)
+        self.Players['ConsumeIndex'] = np.random.random(pop)
+        self.Players.loc[self.Players['isLabor'] == False, 'BizIncome'] = np.random.random(pop - labor)
+        self.Players.loc[self.Players['isLabor'] == True, 'EarnedIncome'] = np.random.random(labor)
+        if kwargs:
+            pass
 
     def StartOperation(self, n):
         pass
@@ -107,4 +107,6 @@ class System:
 
 
 if __name__ == '__main__':
-    s = System()
+    n = 10 ** 5
+    s = System(n)
+    s.DeployPlayers()
