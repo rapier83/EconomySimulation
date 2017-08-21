@@ -26,3 +26,20 @@ class isBool(Exception):
     def __str__(self):
         return self.val
 
+
+class MinimumArgs(Exception):
+
+    def __init__(self):
+        self.val = "[Setting Error]: System needs 2 arguments at least"
+
+    def __str__(self):
+        return self.val
+
+
+class isNotEmpty(Exception):
+
+    def __init__(self):
+        self.val = "Player Data is NOT EMPTY."
+
+    def __str__(self):
+        return self.val
