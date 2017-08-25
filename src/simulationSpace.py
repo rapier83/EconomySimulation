@@ -1,6 +1,8 @@
 import numpy as np
 import Exceptions as ex
 import pandas as pd
+# import matplotlib.pyplot as plt
+import seaborn as sb
 
 __doc__ = """
         # 시스템의 변수들을 정의한다
@@ -24,6 +26,25 @@ class System:
         self.SystemValues = dict()
         self.AdditionalValues = dict()
         self.PlayerData = None
+
+    class Player:
+
+        def __init__(self):
+            self.id = str()
+            self.Income = None
+            self.Consume = None
+
+        def SetData(self, style="df"):
+            pass
+
+        def SetDataAsDataFrame(self, df):
+            pass
+
+        def SetDataAsDict(self, dic):
+            self.Income = dic
+
+        def GetData(self, style="df"):
+            pass
 
     def InitiateSystem(self, Population: int=100, TaxRate: int=0.1, LaborRatio: float=0.3,  # System Value
                        Productivity: bool=False, Consume: bool=False,                       # Player Control
@@ -77,8 +98,18 @@ class System:
             PlayersDF = pd.DataFrame(columns=columns)
 
             PlayersDF['_id'] = np.arange(0, pop)
-            PlayersDF['Productivity'] = np.random.random(pop)
-            PlayersDF['ConsumeIndex'] = np.random.random(pop)
+
+            def GetRandoms(mu=0, sig=0.1, size=None, pos=True):
+                if size is None:
+                    raise ValueError
+                rs = np.random.RandomState(8)
+                s = rs.normal(mu, sig, size=pop)
+                if pos:
+                    s = np.add(s, abs(np.min(s)))
+                return s
+
+            PlayersDF['Productivity'] = GetRandoms(size=pop)
+            PlayersDF['ConsumeIndex'] = GetRandoms(size=pop)
 
             labor = int(pop * (1 - self.SystemValues['LaborRatio']))
             labors = np.random.choice(pop, labor, replace=False)
@@ -92,17 +123,37 @@ class System:
         self.PlayerData = None
 
     @staticmethod
-    def GetDict(self):
-        return self.__dict__
+    def GetDict():
+        return 0
+
+    def GetGini(self, y):
+
+        """
+        https://en.wikipedia.org/wiki/Gini_coefficient
+        :param y: pd.DataFrame() or list() - Players Account Data
+        :return: float() - Gini Coefficient of Current Epoch(Year, Time)
+        """
+
+        n = len(y)
+        numerator = 2 * sum((i + 1) * y[i] for i in range(n))
+        denominator = len(y) * sum(y[i] for i in range(n))
+        g = numerator / denominator + (n + 1) / n
+
+        return g
 
     def GetMatrix(self):
         if type(self.PlayerData) == type(pd.DataFrame()):
             return self.PlayerData.as_matrix(columns=['Productivity', 'ConsumeIndex', 'BizIncome', 'EarnedIncome'])
+
+    def ShowChart(self, style="hist", x="Income", y="", ):
+
+        if style == "hist":
+            sb.distplot(self.PlayerData[x], bins=20)
 
 
 if __name__ == '__main__':
     n = 10 ** 5
     t = 0.1
     s = System()
-    s.InitiateSystem()
+    s.InitiateSystem(n)
     s.DeployPlayers()
