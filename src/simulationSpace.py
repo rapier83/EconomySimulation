@@ -14,9 +14,6 @@ __doc__ = """
 
 class System:
 
-    SystemValue = dict()
-    AdditionalValue = dict()
-
     """
     1.Player 의 수입 Player.Income 에서 차감하는 비율 System.TaxRate 을 정한다.
     2.System.TaxRate 에 따라 가처분소득 Player.DisposableIncome 을 계산한다.
@@ -46,8 +43,8 @@ class System:
         def GetData(self, style="df"):
             pass
 
-    def InitiateSystem(self, Population: int=100, TaxRate: int=0.1, LaborRatio: float=0.3,  # System Value
-                       Productivity: bool=False, Consume: bool=False,                       # Player Control
+    def InitiateSystem(self, Population: int = 100, TaxRate: int = 0.1, LaborRatio: float = 0.3,  # System Value
+                       Productivity: bool = False, Consume: bool = False,  # Player Control
                        **kwargs):
         print(f'System Initiating | Population: {Population}, Tax Rate: {TaxRate}\n\r')
 
@@ -83,41 +80,49 @@ class System:
         if self.PlayerData is not None:
             raise ex.isNotEmpty
 
+        pop = self.SystemValues['Population']
+        NotNumber = 2
+        columns = ['_id', 'isLabor', 'Productivity', 'ConsumeIndex', 'Income']
+        labor = int(pop * (1 - self.SystemValues['LaborRatio']))
+        labors = np.random.choice(pop, labor, replace=False)
+
+        def GetRandoms(mu=0, sig=0.1, size=None, pos=True):
+            if size is None:
+                raise ValueError
+            rs = np.random.RandomState(8)
+            d = rs.normal(mu, sig, size=pop)
+            if pos:
+                d = np.add(d, abs(np.min(d)))
+            return d
+
         if kwargs is not None:
             pass
 
-        if style == "class":
+        if style is "dict":
             pass
 
-        if style == "df":
+        if style is "Matrix":
+            self.PlayerData = np.matrix()
+            m = np.zeros((pop, len(columns)))
+            m[:, :1] = np.matrix(np.arange(int(pop))).transpose()
+            m[labors, 1] = 1
+            m[:, m.shape[1]-NotNumber-1] = GetRandoms(size=(pop, m.shape[1]-NotNumber-1))
+            PlayerData = m
+
+        if style is "df":
             self.PlayerData = pd.DataFrame()
-            pop = self.SystemValues['Population']
 
-            columns = ['_id', 'isLabor', 'Productivity', 'ConsumeIndex', 'Income']
+            df = pd.DataFrame(columns=columns)
 
-            PlayersDF = pd.DataFrame(columns=columns)
+            df['_id'] = np.arange(0, pop)
+            df['Productivity'] = GetRandoms(size=pop)
+            df['ConsumeIndex'] = GetRandoms(size=pop)
+            df['isLabor'] = False
+            df.loc[labors, 'isLabor'] = True
+            df['Income'] = list(np.random.random(pop))
+            PlayerData = df
 
-            PlayersDF['_id'] = np.arange(0, pop)
-
-            def GetRandoms(mu=0, sig=0.1, size=None, pos=True):
-                if size is None:
-                    raise ValueError
-                rs = np.random.RandomState(8)
-                s = rs.normal(mu, sig, size=pop)
-                if pos:
-                    s = np.add(s, abs(np.min(s)))
-                return s
-
-            PlayersDF['Productivity'] = GetRandoms(size=pop)
-            PlayersDF['ConsumeIndex'] = GetRandoms(size=pop)
-
-            labor = int(pop * (1 - self.SystemValues['LaborRatio']))
-            labors = np.random.choice(pop, labor, replace=False)
-            PlayersDF['isLabor'] = False
-            PlayersDF.loc[labors, 'isLabor'] = True
-            PlayersDF['Income'] = list(np.random.random(pop))
-
-        self.PlayerData = PlayersDF
+        self.PlayerData = PlayerData
 
     def ResetPlayersData(self):
         self.PlayerData = None
@@ -126,14 +131,16 @@ class System:
     def GetDict():
         return 0
 
-    def GetGini(self, y):
+    @property
+    def GetGini(self):
 
         """
         https://en.wikipedia.org/wiki/Gini_coefficient
         :param y: pd.DataFrame() or list() - Players Account Data
         :return: float() - Gini Coefficient of Current Epoch(Year, Time)
         """
-
+        if isinstance(self.PlayerData, pd.DataFrame):
+            y = len(self.PlayerData)
         n = len(y)
         numerator = 2 * sum((i + 1) * y[i] for i in range(n))
         denominator = len(y) * sum(y[i] for i in range(n))
@@ -141,11 +148,12 @@ class System:
 
         return g
 
+    @property
     def GetMatrix(self):
-        if type(self.PlayerData) == type(pd.DataFrame()):
-            return self.PlayerData.as_matrix(columns=['Productivity', 'ConsumeIndex', 'BizIncome', 'EarnedIncome'])
+        if isinstance(self.PlayerData, pd.DataFrame):
+            return self.PlayerData.as_matrix(columns=['Productivity', 'ConsumeIndex', 'Income'])
 
-    def ShowChart(self, style="hist", x="Income", y="", ):
+    def ShowChart(self, style="hist", x="Income", y=None, ):
 
         if style == "hist":
             sb.distplot(self.PlayerData[x], bins=20)
