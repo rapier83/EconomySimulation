@@ -80,6 +80,9 @@ class System:
         if self.PlayerData is not None:
             raise ex.isNotEmpty
 
+        if type(style) is not str:
+            raise TypeError
+
         pop = self.SystemValues['Population']
         NotNumber = 2
         columns = ['_id', 'isLabor', 'Productivity', 'ConsumeIndex', 'Income']
@@ -101,8 +104,7 @@ class System:
         if style is "dict":
             pass
 
-        if style is "Matrix":
-            self.PlayerData = np.matrix()
+        if style is "Matrix" or style is "matrix":
             m = np.zeros((pop, len(columns)))
             m[:, :1] = np.matrix(np.arange(int(pop))).transpose()
             m[labors, 1] = 1
@@ -139,8 +141,12 @@ class System:
         :param y: pd.DataFrame() or list() - Players Account Data
         :return: float() - Gini Coefficient of Current Epoch(Year, Time)
         """
+        if isinstance(self.PlayerData, np.matrix):
+            y = self.PlayerData.shape[0]
+
         if isinstance(self.PlayerData, pd.DataFrame):
             y = len(self.PlayerData)
+
         n = len(y)
         numerator = 2 * sum((i + 1) * y[i] for i in range(n))
         denominator = len(y) * sum(y[i] for i in range(n))
@@ -164,4 +170,3 @@ if __name__ == '__main__':
     t = 0.1
     s = System()
     s.InitiateSystem(n)
-    s.DeployPlayers()
