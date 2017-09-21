@@ -1,0 +1,58 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "description": "Economy Simulation Programming for Middle School Students.",
+    
+    "type": "object",
+    
+    "Player": {
+        "type": "object",
+        "Properties": {
+
+            "isWork": { "type": "boolean" },
+            "Income": {
+                "type": "object",
+                "isLabor": {
+                    "type": "boolean",
+                    "dependencies": { "$ref": "#/System/Properties/LaborProportion" }
+                },
+                "BizIncome": { "type": "integer", "minimum": 0 },
+                "EarnedIncome": { "type": "integer", "minimum": 0 },
+                "Subsidy": { "type": "integer", "minimum": 0 },
+                "TotalIncome": {
+                    "type": "integer",
+                    "minimum":0,
+                    "$ref": ["#/Players/Properties/Income/BizIncome", "#/Players/Properties/Income/EarnedIncome", "#/Players/Properties/Income/Subsidy"]
+                }
+            }
+            },
+            "Consumption": {
+                "type": "object",
+                "ConsumptionRate": { "type": "number", "minimum": 0,"maximum": 1, "exclusiveMaximum": false }
+            },
+ 
+            "required": [ "ID", "isWork", "isLabor", "Income", "Consumption" ],
+            "dependencies": {
+                "DisposableIncome": { "$ref": ["#/Players/Properties/Income/TotalIncome", "#/Players/properties/Consumption/ConsumptionRate", "#/System/Properties/Taxation"] },
+                "AccountLevel": { "$ref": ["#/Players/Properties/DisposableIncome", "#/System/Population"]}
+        }
+    },
+
+    
+    "System": {
+        "type": "object",
+        "Class": { "type": "string" },
+        "Properties": {
+            "type": "object",
+            "Population": { "type": "integer" },
+            "TaxRate": { "type": "number", "minimum": 0,"maximum": 1, "exclusiveMaximum": true },
+            "LaborProportion": { "type": "number", "minimum": 0,"maximum": 1 },
+            "SubsidyRate": { "type": "number", "minimum": 0,"maximum": 1, "exclusiveMaximum": true }
+        },
+        "dependencies": {
+            "GiniCoefficient": { "$ref": ["#/Players/Properties/DisposableIncome", "#/System/Population"]},
+            "Yc": { "$ref": "#/Players/Income/DisposableIncome" }
+        }
+        
+    }
+    
+}
